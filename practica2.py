@@ -55,6 +55,9 @@ def definir_transiciones(estados, alfabeto):
     return transiciones
 
 def validar_cadena(alfabeto, estados, transiciones, estado_inicial, aceptados, cadena):
+    if not estado_inicial or not aceptados or not transiciones:
+        return False, "Debe definir el autómata completo antes de validar."
+    
     est_actual = estado_inicial
     for caracter in cadena:
         if caracter not in alfabeto:
@@ -80,28 +83,37 @@ def presentar_transiciones(transiciones):
 def main(page: ft.Page):
     page.title = "Operaciones sobre Lenguajes y Autómatas"
     page.vertical_alignment = ft.MainAxisAlignment.START
+    page.scroll = "adaptive"
+    page.auto_scroll = True  # Para hacer la aplicación más responsiva
 
     # Inputs para alfabeto y número n
-    alfabeto_input = ft.TextField(label="Ingrese el alfabeto separado por comas (ej: a,b,c)", width=400)
-    n_input = ft.TextField(label="Ingrese el número máximo de combinaciones", width=400)
+    alfabeto_input = ft.TextField(label="Ingrese el alfabeto separado por comas (ej: a,b,c)", expand=True)
+    n_input = ft.TextField(label="Ingrese el número máximo de combinaciones", expand=True)
     
     # Inputs para lenguajes
-    lenguaje1_input = ft.TextField(label="Ingrese las cadenas del primer lenguaje separadas por comas", width=400)
-    lenguaje2_input = ft.TextField(label="Ingrese las cadenas del segundo lenguaje separadas por comas", width=400)
+    lenguaje1_input = ft.TextField(label="Ingrese las cadenas del primer lenguaje separadas por comas", expand=True)
+    lenguaje2_input = ft.TextField(label="Ingrese las cadenas del segundo lenguaje separadas por comas", expand=True)
 
     # Input para potencia de un lenguaje
-    potencia_input = ft.TextField(label="Ingrese la potencia del lenguaje", width=400)
+    potencia_input = ft.TextField(label="Ingrese la potencia del lenguaje", expand=True)
 
     # Input para definir autómata (estados, transiciones y aceptación)
-    estados_input = ft.TextField(label="Ingrese los estados separados por comas (ej: 0,1,2)", width=400)
-    estado_inicial_input = ft.TextField(label="Ingrese el estado inicial", width=400)
-    cadena_input = ft.TextField(label="Ingrese la cadena a validar", width=400)
+    estados_input = ft.TextField(label="Ingrese los estados separados por comas (ej: 0,1,2)", expand=True)
+    estado_inicial_input = ft.TextField(label="Ingrese el estado inicial", expand=True)
+    cadena_input = ft.TextField(label="Ingrese la cadena a validar", expand=True)
 
     transiciones = {}
-    aceptados_input = ft.TextField(label="Ingrese los estados de aceptación separados por comas (ej: 2,3)", width=400)
+    aceptados_input = ft.TextField(label="Ingrese los estados de aceptación separados por comas (ej: 2,3)", expand=True)
 
-    # Display de resultados
+    # Display de resultados con scroll
     resultado_text = ft.Text("", size=18)
+    resultado_scroll = ft.ListView(
+        controls=[resultado_text],
+        height=150,
+        spacing=10,
+        padding=10,
+        auto_scroll=True
+    )
 
     # Función para mostrar y ocultar la columna de definición del autómata
     def mostrar_ocultar_columna_autómata(visible):
@@ -134,22 +146,27 @@ def main(page: ft.Page):
         estado_inicial = estado_inicial_input.value
         cadena = cadena_input.value
 
-        # Obtener transiciones definidas por el usuario
-        transiciones_definidas = {}
-        for estado in transiciones:
-            transiciones_definidas[estado] = {}
-            for simbolo, campo in transiciones[estado].items():
-                transiciones_definidas[estado][simbolo] = campo.value
-        
-        aceptada, mensaje = validar_cadena(alfabeto, estados, transiciones_definidas, estado_inicial, aceptados, cadena)
-        
-        # Actualizar color del texto dependiendo del resultado
-        if aceptada:
-            resultado_text.color = ft.colors.GREEN
-        else:
+        # Verificar que se hayan definido las transiciones y campos requeridos
+        if not estado_inicial or not aceptados or not transiciones:
+            resultado_text.value = "Error: Debe definir el autómata completo antes de validar."
             resultado_text.color = ft.colors.RED
-        
-        resultado_text.value = mensaje
+        else:
+            # Obtener transiciones definidas por el usuario
+            transiciones_definidas = {}
+            for estado in transiciones:
+                transiciones_definidas[estado] = {}
+                for simbolo, campo in transiciones[estado].items():
+                    transiciones_definidas[estado][simbolo] = campo.value
+            
+            aceptada, mensaje = validar_cadena(alfabeto, estados, transiciones_definidas, estado_inicial, aceptados, cadena)
+            
+            # Actualizar color del texto dependiendo del resultado
+            if aceptada:
+                resultado_text.color = ft.colors.GREEN
+            else:
+                resultado_text.color = ft.colors.RED
+            
+            resultado_text.value = mensaje
         page.update()
 
     # Botones para acciones
@@ -180,7 +197,7 @@ def main(page: ft.Page):
             button_validar_cadena,
         ],
         visible=False,
-        width=400
+        expand=True
     )
 
     # Botón para mostrar/ocultar columna de autómata
@@ -196,6 +213,7 @@ def main(page: ft.Page):
             n = int(n_input.value)
             resultado = kleene_cerradura(alfabeto, n)
             resultado_text.value = f"Cerradura de Kleene: {resultado}"
+            resultado_text.color = ft.colors.BLACK
         except ValueError:
             resultado_text.value = "Por favor ingrese un número válido."
         page.update()
@@ -206,6 +224,7 @@ def main(page: ft.Page):
             n = int(n_input.value)
             resultado = clausura_positiva(alfabeto, n)
             resultado_text.value = f"Clausura Positiva: {resultado}"
+            resultado_text.color = ft.colors.BLACK
         except ValueError:
             resultado_text.value = "Por favor ingrese un número válido."
         page.update()
@@ -219,6 +238,7 @@ def main(page: ft.Page):
         else:
             resultado = concatenar_lenguajes(lenguaje1, lenguaje2)
             resultado_text.value = f"Concatenación de lenguajes: {resultado}"
+            resultado_text.color = ft.colors.BLACK
         page.update()
 
     def realizar_potenciacion(e):
@@ -228,6 +248,7 @@ def main(page: ft.Page):
             potencia = int(potencia_input.value)
             resultado = potenciar_lenguaje(lenguaje, potencia)
             resultado_text.value = f"Potenciación del lenguaje: {resultado}"
+            resultado_text.color = ft.colors.BLACK
         except ValueError:
             resultado_text.value = "Por favor ingrese una potencia válida."
         page.update()
@@ -236,6 +257,7 @@ def main(page: ft.Page):
         lenguaje = lenguaje1_input.value.split(',')
         resultado = reflexion_lenguaje(lenguaje)
         resultado_text.value = f"Reflexión del lenguaje: {resultado}"
+        resultado_text.color = ft.colors.BLACK
         page.update()
 
     def realizar_union(e):
@@ -243,6 +265,7 @@ def main(page: ft.Page):
         lenguaje2 = lenguaje2_input.value.split(',')
         resultado = union_lenguajes(lenguaje1, lenguaje2)
         resultado_text.value = f"Unión de lenguajes: {resultado}"
+        resultado_text.color = ft.colors.BLACK
         page.update()
 
     def realizar_interseccion(e):
@@ -250,6 +273,7 @@ def main(page: ft.Page):
         lenguaje2 = lenguaje2_input.value.split(',')
         resultado = interseccion_lenguajes(lenguaje1, lenguaje2)
         resultado_text.value = f"Intersección de lenguajes: {resultado}"
+        resultado_text.color = ft.colors.BLACK
         page.update()
 
     def realizar_diferencia(e):
@@ -257,6 +281,7 @@ def main(page: ft.Page):
         lenguaje2 = lenguaje2_input.value.split(',')
         resultado = diferencia_lenguajes(lenguaje1, lenguaje2)
         resultado_text.value = f"Diferencia de lenguajes: {resultado}"
+        resultado_text.color = ft.colors.BLACK
         page.update()
 
     # Botones para operaciones de lenguajes
@@ -278,8 +303,7 @@ def main(page: ft.Page):
             lenguaje2_input,
             potencia_input,
         ],
-        alignment=ft.MainAxisAlignment.START,
-        width=400
+        expand=True
     )
 
     col2 = ft.Column(
@@ -294,14 +318,13 @@ def main(page: ft.Page):
             button_diferencia,
             button_autómata,
         ],
-        alignment=ft.MainAxisAlignment.START,
-        width=200
+        expand=True
     )
 
     # Añadir elementos a la página con estructura de columnas
     page.add(
-        ft.Row(controls=[col1, col2, col_autómata], spacing=50),
-        resultado_text,
+        ft.Row(controls=[col1, col2, col_autómata], expand=True),
+        resultado_scroll,  # Aquí se añade el resultado con scroll
     )
 
 # Iniciar la aplicación Flet
